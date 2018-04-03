@@ -1,0 +1,88 @@
+Bash Commands :
+
+#Convert all initially present @ to correct texts
+sed -e 's/i@/i?/g' -e 's/m@ch@/mache/g' -e 's/gr@ce:/grace/g' DA.txt > t0.txt
+
+#convert all end of sentence to .
+sed 's/[.!?]/ . /g' t0.txt > t1.txt
+
+#convert all contractions
+sed -e "s/'d/ would/g" -e "s/'m/ am/g" -e "s/'l/ will/g" -e "s/'ll/ will/g" -e "s/'s/ is/g" -e "s/'re/ are/g" -e "s/'ve/ have/g" -e "s/n't/ not/g" -e "s/'em/ them/g" -e "s/'cos/because/g" t1.txt > t2.txt
+
+#Convert % to percentage and remove all other punctuations except @
+sed -e 's/%/a percentage/g' -e 's/[.]/M/g;s/\([[:punct:]]\)//g;s/[M]/./g' t2.txt > t3.txt
+
+#Remove all more than one occurrence of spaces
+sed -E 's/ [ ]+//g' t3.txt > t4.txt
+
+#Remove all more than one occurrence of @
+sed -E 's/@[@]+/@/g' t4.txt > t5.txt
+
+#Few contractions to be made right
+sed -e 's/ca not/can not/g' -e 's/wo not/will not/g' -e 's/sha not/shall not/g' t5.txt > t6.txt
+
+#Making sure all . separated from words
+sed -e 's/\([@]\)\([a-z]\)/\1\ \2/g' t6.txt > t7.txt
+sed -e 's/\([@]\)\([a-z]\)/\1\ \2/g' t7.txt > t8.txt
+sed -E 's/.[.]+/ . /g' t8.txt > t9.txt
+
+#Finding all words and storing in a file
+egrep -o '[A-Za-z.]+' t9.txt > norm.txt
+
+#Convert DA.txt to TDA.txt
+java -cp "*" edu.stanford.nlp.tagger.maxent.MaxentTagger -model models/english-left3words-distsim.tagger -textFile norm.txt -tokenize true -outputFormat tsv -outputFile TDA.txt
+
+#Remove empty lines
+awk NF TDA.txt > newTDA.txt
+
+#Extract column two for taus file
+awk '{print $2}' newTDA.txt > a0.txt
+
+#offset by 1 word
+tail -n+2 a0.txt > a1.txt
+
+#Make pairs of words
+paste a0.txt a1.txt > pairs.txt
+
+#Create sigmas file
+sort < pairs.txt | uniq -c | sort -n -r > a2.txt
+sed -e 's/[ ]*\([0-9]\)/\1/g' a2.txt > a4.txt
+tr "\t" " " < a4.txt > a6.txt
+sed '$d' a6.txt > a8.txt
+sed s/[.]/@/g a8.txt > a10.txt
+sed -E "s/[^,[:digit:] ][^,[:digit:] ]*/'&'/g" a10.txt > a12.txt
+sed -e 's/^/sig(/g' -e 's/\([0-9]\) /\1,/g' -e 's/$/)./g' -e 's/[ ]*\([0-9]\)/\1/g' a12.txt > sigmas.txt
+tr " " "," < sigmas.txt > sigmas.pl
+sed "s/'@'/@/g" sigmas.pl > sigmas1.pl
+
+#Create taus file
+sort < newTDA.txt | uniq -c | sort -n -r > a3.txt
+sed -e 's/[ ]*\([0-9]\)/\1/g' a3.txt > a5.txt
+tr "\t" " " < a5.txt > a7.txt
+sed '$d' a7.txt > a9.txt
+sed s/[.]/@/g a9.txt > a11.txt
+sed -E "s/[^,[:digit:] ][^,[:digit:] ]*/'&'/g" a11.txt > a13.txt
+sed -e 's/^/ta(/g' -e 's/\([0-9]\) /\1,/g' -e 's/$/)./g' -e 's/[ ]*\([0-9]\)/\1/g' a13.txt > taus.txt
+tr " " "," < taus.txt > taus.pl
+sed "s/'@'/@/g" taus.pl > taus1.pl
+tail -n+2 taus1.pl > taus2.pl
+
+#Create count file
+sort < a1.txt | uniq -c | sort -n -r > a14.txt 
+sed -e 's/^/count(/g' -e 's/$/)./g' -e 's/[ ]*\([0-9]\)/\1/g' a14.txt > count.txt
+tr " " "," < count.txt > count.pl
+sed -E "s/[^,[:digit:] ][^,[:digit:] ]*/'&'/g" a14.txt > a15.txt
+sed -e 's/^/count(/g' -e 's/$/)./g' -e 's/[ ]*\([0-9]\)/\1/g' a15.txt > count.txt
+tr " " "," < count.txt > count.pl
+sed "s/'@'/@/g" counts.pl > counts1.pl
+
+
+
+
+
+
+
+
+
+
+
